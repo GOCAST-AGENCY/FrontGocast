@@ -55,7 +55,7 @@ const AppLayout = ({ children }) => {
         {children}
       </Content>
       <Footer style={{ textAlign: 'center', background: '#fff' }}>
-        GoCast Agency ©2024 - Gestion de Talents
+        GoCast Agency - Gestion de Talents
       </Footer>
     </Layout>
   );

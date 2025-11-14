@@ -105,7 +105,16 @@ const TalentProfile = () => {
   };
 
   const handleDownloadCV = () => {
-    if (talent.cv_pdf) {
+    if (talent.cv_pdf_gridfs_id) {
+      // Télécharger depuis GridFS
+      const link = document.createElement('a');
+      link.href = `${apiConfig.apiURL}/files/talent/${talent.id}/cv`;
+      link.download = `CV_${talent.nom}_${talent.prenom}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else if (talent.cv_pdf) {
+      // Fallback pour les anciens fichiers locaux
       const link = document.createElement('a');
       link.href = `${apiConfig.uploadsURL}/${talent.cv_pdf}`;
       link.download = `CV_${talent.nom}_${talent.prenom}.pdf`;
@@ -205,7 +214,7 @@ const TalentProfile = () => {
           <Card 
             title="CV Artistique"
             extra={
-              talent.cv_pdf && (
+              (talent.cv_pdf_gridfs_id || talent.cv_pdf) && (
                 <Button 
                   type="primary" 
                   icon={<DownloadOutlined />}
@@ -216,7 +225,7 @@ const TalentProfile = () => {
               )
             }
           >
-            {talent.cv_pdf ? (
+            {(talent.cv_pdf_gridfs_id || talent.cv_pdf) ? (
               <div>
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -283,7 +292,7 @@ const TalentProfile = () => {
                       <Col key={photo.id} span={6}>
                         <div style={{ position: 'relative' }}>
                           <Image
-                            src={`${apiConfig.uploadsURL}/${photo.chemin}`}
+                            src={photo.gridfs_id ? `${apiConfig.apiURL}/files/photo/${photo.id}` : `${apiConfig.uploadsURL}/${photo.chemin}`}
                             alt={expr}
                             style={{ width: '100%', height: '150px', objectFit: 'cover' }}
                           />
@@ -317,12 +326,12 @@ const TalentProfile = () => {
           </Card>
 
           <Card title="Vidéo de Présentation" style={{ marginTop: '24px' }}>
-            {talent.video_presentation ? (
+            {(talent.video_presentation_gridfs_id || talent.video_presentation) ? (
               <div>
                 <video
                   controls
                   style={{ width: '100%', maxHeight: '400px' }}
-                  src={`${apiConfig.uploadsURL}/${talent.video_presentation}`}
+                  src={talent.video_presentation_gridfs_id ? `${apiConfig.apiURL}/files/talent/${talent.id}/video` : `${apiConfig.uploadsURL}/${talent.video_presentation}`}
                 />
                 <Button
                   danger
