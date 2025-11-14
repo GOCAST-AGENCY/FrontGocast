@@ -16,14 +16,30 @@ Frontend React pour l'application GoCast Agency avec Ant Design.
 npm install
 ```
 
-2. Démarrer le serveur de développement
+2. Configurer les variables d'environnement
+
+Créez un fichier `.env.local` à la racine du projet :
+
+**Pour le développement local (localhost):**
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+**Pour utiliser l'API de production (Render):**
+```env
+VITE_API_URL=https://backendgocast.onrender.com
+```
+
+3. Démarrer le serveur de développement
 ```bash
 npm run dev
 ```
 
 L'application sera accessible sur `http://localhost:3001`
 
-⚠️ **Important:** Assurez-vous que le backend est démarré sur le port 3000.
+⚠️ **Important:** 
+- Assurez-vous que le backend est démarré sur le port 3000 (si vous utilisez localhost)
+- Après modification du `.env.local`, redémarrez le serveur de développement
 
 ## 📁 Structure du projet
 
@@ -33,16 +49,17 @@ FrontGocast/
 │   ├── components/      # Composants réutilisables
 │   │   ├── AppLayout.jsx
 │   │   └── Logo.jsx
+│   ├── config/          # Configuration (API URLs)
+│   │   └── api.js
 │   ├── context/         # Context API (AuthContext)
 │   ├── pages/           # Pages de l'application
-│   │   ├── Home.jsx
 │   │   ├── Login.jsx
 │   │   ├── Dashboard.jsx
-│   │   ├── TalentProfile.jsx
-│   │   └── About.jsx
+│   │   └── TalentProfile.jsx
 │   ├── App.jsx          # Composant principal
 │   ├── main.jsx         # Point d'entrée
 │   └── index.css        # Styles globaux
+├── .env.local           # Variables d'environnement (non commité)
 ├── index.html
 ├── vite.config.js
 ├── package.json
@@ -65,11 +82,18 @@ Le design suit l'identité visuelle GoCast :
 
 ## 📄 Pages
 
-- **Accueil** (`/`) - Présentation et statistiques
 - **Connexion** (`/login`) - Authentification administrateur
 - **Tableau de bord** (`/dashboard`) - Liste et gestion des talents
 - **Profil Talent** (`/talent/:id`) - Détails complets d'un talent
-- **À propos** (`/about`) - Informations sur l'agence
+
+## ⚙️ Configuration de l'API
+
+L'URL de l'API backend est configurée via la variable d'environnement `VITE_API_URL` dans le fichier `.env.local`.
+
+- **Localhost:** `VITE_API_URL=http://localhost:3000`
+- **Production:** `VITE_API_URL=https://backendgocast.onrender.com`
+
+Voir `ENV_CONFIG.md` pour plus de détails.
 
 ## 🔐 Authentification
 

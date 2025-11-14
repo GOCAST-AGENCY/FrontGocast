@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import apiConfig from '../config/api';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -106,7 +107,7 @@ const TalentProfile = () => {
   const handleDownloadCV = () => {
     if (talent.cv_pdf) {
       const link = document.createElement('a');
-      link.href = `/uploads/${talent.cv_pdf}`;
+      link.href = `${apiConfig.uploadsURL}/${talent.cv_pdf}`;
       link.download = `CV_${talent.nom}_${talent.prenom}.pdf`;
       document.body.appendChild(link);
       link.click();
@@ -282,7 +283,7 @@ const TalentProfile = () => {
                       <Col key={photo.id} span={6}>
                         <div style={{ position: 'relative' }}>
                           <Image
-                            src={`/uploads/${photo.chemin}`}
+                            src={`${apiConfig.uploadsURL}/${photo.chemin}`}
                             alt={expr}
                             style={{ width: '100%', height: '150px', objectFit: 'cover' }}
                           />
@@ -321,7 +322,7 @@ const TalentProfile = () => {
                 <video
                   controls
                   style={{ width: '100%', maxHeight: '400px' }}
-                  src={`/uploads/${talent.video_presentation}`}
+                  src={`${apiConfig.uploadsURL}/${talent.video_presentation}`}
                 />
                 <Button
                   danger
