@@ -36,9 +36,9 @@ const AppLayout = ({ children }) => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', background: '#fff', padding: '0 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+      <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '0 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <div 
-          style={{ marginRight: '24px', cursor: 'pointer' }}
+          style={{ cursor: 'pointer' }}
           onClick={() => navigate('/dashboard')}
         >
           <Logo />
@@ -48,7 +48,7 @@ const AppLayout = ({ children }) => {
           selectedKeys={[location.pathname]}
           items={menuItems}
           onClick={handleMenuClick}
-          style={{ flex: 1, borderBottom: 'none' }}
+          style={{ borderBottom: 'none' }}
         />
       </Header>
       <Content style={{ padding: '24px', background: '#f0f2f5' }}>
