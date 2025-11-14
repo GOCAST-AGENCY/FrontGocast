@@ -1,4 +1,4 @@
-import { Layout, Menu } from 'antd';
+import { Layout, Button, Space } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DashboardOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
@@ -11,45 +11,36 @@ const AppLayout = ({ children }) => {
   const location = useLocation();
   const { isAuthenticated, logout } = useAuth();
 
-  const menuItems = [
-    {
-      key: '/dashboard',
-      icon: <DashboardOutlined />,
-      label: 'Tableau de bord',
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Déconnexion',
-      danger: true,
-    },
-  ];
-
-  const handleMenuClick = ({ key }) => {
-    if (key === 'logout') {
-      logout();
-      navigate('/login');
-    } else {
-      navigate(key);
-    }
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '0 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <div 
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/dashboard')}
+        <Space>
+          <div 
+            style={{ cursor: 'pointer', marginRight: '24px' }}
+            onClick={() => navigate('/dashboard')}
+          >
+            <Logo />
+          </div>
+          <Button
+            type={location.pathname === '/dashboard' ? 'primary' : 'text'}
+            icon={<DashboardOutlined />}
+            onClick={() => navigate('/dashboard')}
+          >
+            Tableau de bord
+          </Button>
+        </Space>
+        <Button
+          danger
+          icon={<LogoutOutlined />}
+          onClick={handleLogout}
         >
-          <Logo />
-        </div>
-        <Menu
-          mode="horizontal"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={handleMenuClick}
-          style={{ borderBottom: 'none' }}
-        />
+          Déconnexion
+        </Button>
       </Header>
       <Content style={{ padding: '24px', background: '#f0f2f5' }}>
         {children}
