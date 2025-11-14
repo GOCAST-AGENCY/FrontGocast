@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: 3001,
+      // Configuration pour gérer les routes SPA en développement
+      historyApiFallback: true,
       proxy: {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:3000',
@@ -19,6 +21,13 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true
         }
       }
+    },
+    // Configuration pour le build
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      // Copier le fichier _redirects dans le build
+      copyPublicDir: true
     }
   };
 });
