@@ -59,9 +59,11 @@ const Login = () => {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" block>
-                Se connecter
-              </Button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button type="primary" htmlType="submit">
+                  Se connecter
+                </Button>
+              </div>
             </Form.Item>
           </Form>
         </Card>
