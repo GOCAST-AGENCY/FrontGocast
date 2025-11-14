@@ -40,10 +40,81 @@ const TalentProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [photoCache, setPhotoCache] = useState({}); // Cache pour les photos base64
+  const [videoSrc, setVideoSrc] = useState(null);
+  const [cvSrc, setCvSrc] = useState(null);
 
   useEffect(() => {
     fetchTalent();
+    // Réinitialiser le cache quand on change de talent
+    setPhotoCache({});
+    setVideoSrc(null);
+    setCvSrc(null);
   }, [id]);
+
+  // Charger les images base64 quand le talent change
+  useEffect(() => {
+    if (!talent) return;
+
+    // Charger toutes les photos en parallèle
+    const loadPhotos = async () => {
+      if (talent.photos && talent.photos.length > 0) {
+        // Filtrer les photos qui ont base64 et qui ne sont pas déjà en cache
+        const photosToLoad = talent.photos.filter(photo => photo.hasBase64);
+        
+        if (photosToLoad.length === 0) return;
+
+        const photoPromises = photosToLoad.map(photo => 
+          axios.get(`/api/files/photo/${photo.id}`)
+            .then(response => ({
+              id: photo.id,
+              base64: response.data.base64
+            }))
+            .catch(error => {
+              console.error(`Erreur chargement photo ${photo.id}:`, error);
+              return null;
+            })
+        );
+
+        const results = await Promise.all(photoPromises);
+        setPhotoCache(prevCache => {
+          const newCache = { ...prevCache };
+          results.forEach(result => {
+            if (result) {
+              newCache[result.id] = result.base64;
+            }
+          });
+          return newCache;
+        });
+      }
+    };
+
+    loadPhotos();
+
+    // Charger la vidéo si elle existe
+    if (talent.video_presentation) {
+      axios.get(`/api/files/talent/${talent.id}/video`)
+        .then(response => {
+          setVideoSrc(response.data.base64);
+        })
+        .catch(error => {
+          // Si erreur, peut-être que c'est une ancienne URL
+          console.error('Erreur chargement vidéo:', error);
+        });
+    }
+
+    // Charger le CV si il existe
+    if (talent.cv_pdf) {
+      axios.get(`/api/files/talent/${talent.id}/cv`)
+        .then(response => {
+          setCvSrc(response.data.base64);
+        })
+        .catch(error => {
+          // Si erreur, peut-être que c'est une ancienne URL
+          console.error('Erreur chargement CV:', error);
+        });
+    }
+  }, [talent?.id, talent?.photos?.length]); // Recharger quand le talent ou le nombre de photos change
 
   const fetchTalent = async () => {
     setLoading(true);
@@ -68,8 +139,14 @@ const TalentProfile = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       message.success('Photo uploadée avec succès');
-      fetchTalent();
+      // Recharger le talent et les photos
+      await fetchTalent();
+      // Recharger les photos après un court délai pour laisser le temps à la DB
+      setTimeout(() => {
+        fetchTalent();
+      }, 500);
     } catch (error) {
+      console.error('Erreur upload photo:', error);
       message.error('Erreur lors de l\'upload de la photo');
     }
   };
@@ -105,19 +182,20 @@ const TalentProfile = () => {
   };
 
   const handleDownloadCV = () => {
-    if (talent.cv_pdf_gridfs_id) {
-      // Télécharger depuis GridFS
+    if (cvSrc) {
+      // Télécharger depuis base64
       const link = document.createElement('a');
-      link.href = `${apiConfig.apiURL}/files/talent/${talent.id}/cv`;
+      link.href = cvSrc;
       link.download = `CV_${talent.nom}_${talent.prenom}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } else if (talent.cv_pdf) {
-      // Fallback pour les anciens fichiers locaux
+      // Fallback pour anciens fichiers
       const link = document.createElement('a');
-      link.href = `${apiConfig.uploadsURL}/${talent.cv_pdf}`;
+      link.href = talent.cv_pdf;
       link.download = `CV_${talent.nom}_${talent.prenom}.pdf`;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -128,8 +206,16 @@ const TalentProfile = () => {
     try {
       await axios.delete(`/api/talents/photos/${photoId}`);
       message.success('Photo supprimée');
-      fetchTalent();
+      // Retirer de la cache
+      setPhotoCache(prev => {
+        const newCache = { ...prev };
+        delete newCache[photoId];
+        return newCache;
+      });
+      // Recharger le talent
+      await fetchTalent();
     } catch (error) {
+      console.error('Erreur suppression photo:', error);
       message.error('Erreur lors de la suppression');
     }
   };
@@ -214,7 +300,7 @@ const TalentProfile = () => {
           <Card 
             title="CV Artistique"
             extra={
-              (talent.cv_pdf_gridfs_id || talent.cv_pdf) && (
+              talent.cv_pdf && (
                 <Button 
                   type="primary" 
                   icon={<DownloadOutlined />}
@@ -225,7 +311,7 @@ const TalentProfile = () => {
               )
             }
           >
-            {(talent.cv_pdf_gridfs_id || talent.cv_pdf) ? (
+            {talent.cv_pdf ? (
               <div>
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -292,9 +378,11 @@ const TalentProfile = () => {
                       <Col key={photo.id} span={6}>
                         <div style={{ position: 'relative' }}>
                           <Image
-                            src={photo.gridfs_id ? `${apiConfig.apiURL}/files/photo/${photo.id}` : `${apiConfig.uploadsURL}/${photo.chemin}`}
+                            src={photoCache[photo.id] || photo.chemin || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub24gZGlzcG9uaWJsZTwvdGV4dD48L3N2Zz4='}
                             alt={expr}
                             style={{ width: '100%', height: '150px', objectFit: 'cover' }}
+                            preview={false}
+                            fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5DaGFyZ2VtZW50Li4uPC90ZXh0Pjwvc3ZnPg=="
                           />
                           <Button
                             danger
@@ -326,12 +414,12 @@ const TalentProfile = () => {
           </Card>
 
           <Card title="Vidéo de Présentation" style={{ marginTop: '24px' }}>
-            {(talent.video_presentation_gridfs_id || talent.video_presentation) ? (
+            {talent.video_presentation ? (
               <div>
                 <video
                   controls
                   style={{ width: '100%', maxHeight: '400px' }}
-                  src={talent.video_presentation_gridfs_id ? `${apiConfig.apiURL}/files/talent/${talent.id}/video` : `${apiConfig.uploadsURL}/${talent.video_presentation}`}
+                  src={videoSrc || talent.video_presentation}
                 />
                 <Button
                   danger
