@@ -1,6 +1,7 @@
 import { Card, Form, Input, Button, message, Layout } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
@@ -9,14 +10,20 @@ const { Content } = Layout;
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const onFinish = async (values) => {
-    const result = await login(values.username, values.password);
-    if (result.success) {
-      message.success('Connexion réussie !');
-      navigate('/dashboard');
-    } else {
-      message.error(result.error || 'Erreur de connexion');
+    setLoading(true);
+    try {
+      const result = await login(values.username, values.password);
+      if (result.success) {
+        message.success('Connexion réussie !');
+        navigate('/dashboard');
+      } else {
+        message.error(result.error || 'Erreur de connexion');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,7 +67,7 @@ const Login = () => {
 
             <Form.Item>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" loading={loading}>
                   Se connecter
                 </Button>
               </div>
